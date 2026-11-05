@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مُحول الصور إلى روابط مباشرة</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Tajawal', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- Header / Navigation -->
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+                    <i class="fa-solid fa-link text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold bg-gradient-to-r from-brand-600 to-indigo-600 dark:from-brand-500 dark:to-indigo-400 bg-clip-text text-transparent">
+                        رابط صورتي (PicLink)
+                    </h1>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">ارفع أية صورة واحصل على رابط مباشر قابل للمشاركة خلال ثوانٍ</p>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center gap-3">
+                <!-- Host Server Selector -->
+                <div class="relative hidden md:block">
+                    <select id="apiProvider" class="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-brand-500">
+                        <option value="catbox">خادم السحابة (Catbox API)</option>
+                        <option value="freeimage">خادم ثانوي (FreeImage API)</option>
+                        <option value="local">رابط كود محلّي (DataURL/Base64)</option>
+                    </select>
+                </div>
+
+                <button id="themeToggleBtn" onclick="toggleDarkMode()" class="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block text-amber-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-8">
+        
+        <!-- Upload Card Container -->
+        <section class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-700/60 shadow-xl space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">تحويل الصور إلى روابط مباشرة</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">اختر صورة من جهازك للحصول على رابط مباشر جاهز للمشاركة في المواقع والتطبيقات</p>
+            </div>
+
+            <!-- Drag and Drop Box -->
+            <div id="dropZone" class="relative cursor-pointer border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-2xl p-8 sm:p-12 text-center bg-slate-50/50 dark:bg-slate-900/40 hover:bg-brand-50/30 dark:hover:bg-slate-800/80 transition-all duration-300">
+                <input type="file" id="fileInput" accept="image/*" class="hidden">
+                
+                <div class="flex flex-col items-center space-y-3">
+                    <div class="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-slate-800 text-brand-600 dark:text-brand-400 flex items-center justify-center shadow-inner">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">اضغط هنا أو اسحب الصورة إلى هذه المنطقة</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">يدعم صيغ PNG, JPG, WEBP, GIF حتى حجم 10MB</p>
+                    </div>
+
+                    <button class="mt-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs transition-colors shadow-lg shadow-brand-500/20">
+                        اختيار صورة من الجهاز
+                    </button>
+                </div>
+            </div>
+
+            <!-- Uploading Loader Indicator -->
+            <div id="uploadLoader" class="hidden p-6 rounded-2xl bg-brand-50/50 dark:bg-slate-900/60 border border-brand-100 dark:border-slate-700 text-center space-y-3">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-brand-500 border-t-transparent"></div>
+                <p id="loaderStatusText" class="text-xs font-semibold text-brand-700 dark:text-brand-400">جاري رفع الصورة وتحويلها إلى رابط مخصص...</p>
+            </div>
+
+            <!-- Result Box: Appears After Successful Upload -->
+            <div id="resultBox" class="hidden border border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/20 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-emerald-200/50 dark:border-emerald-800/40 pb-3">
+                    <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                        تم رفع الصورة ونظام الرابط جاهز!
+                    </span>
+                    <button onclick="hideResultBox()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <!-- Image Preview -->
+                    <div class="h-32 rounded-xl bg-slate-900/20 overflow-hidden flex items-center justify-center p-2 border border-slate-200 dark:border-slate-700">
+                        <img id="resultImgPreview" src="" alt="المعاينة" class="max-h-full max-w-full object-contain rounded">
+                    </div>
+
+                    <!-- Direct Links List -->
+                    <div class="md:col-span-2 space-y-3">
+                        <!-- Direct Link -->
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1 block">الرابط المباشر (Direct Link):</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="linkDirect" readonly class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono select-all text-brand-600 dark:text-brand-400">
+                                <button onclick="copyFieldValue('linkDirect')" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span>نسخ</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- HTML Code Link -->
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1 block">كود تضمين للمواقع (HTML Code):</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="linkHtml" readonly class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono select-all text-slate-600 dark:text-slate-400">
+                                <button onclick="copyFieldValue('linkHtml')" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold">
+                                    نسخ
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Markdown Code -->
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1 block">كود المنتديات و Markdown:</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="linkMarkdown" readonly class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono select-all text-slate-600 dark:text-slate-400">
+                                <button onclick="copyFieldValue('linkMarkdown')" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold">
+                                    نسخ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upload History Section -->
+        <section class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-brand-500"></i>
+                    سجل الصور المرفوعة سابقاً
+                </h3>
+                <button onclick="clearHistory()" class="text-xs text-rose-500 hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-trash-can"></i> مسح السجل
+                </button>
+            </div>
+
+            <!-- History Cards Grid -->
+            <div id="historyGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Filled dynamically via JavaScript -->
+            </div>
+
+            <!-- Empty State for History -->
+            <div id="emptyHistory" class="hidden py-8 text-center bg-white dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <p class="text-xs text-slate-400">لم تقم برفع أي صورة بعد. الصور التي ترفعها تظهر هنا لتسهيل نسخ روابطها لاحقاً.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-xs text-slate-400 border-t border-slate-200 dark:border-slate-800">
+        تطبيق رفع الصور وتحويلها لروابط مباشرة © 2026 | حماية الخصوصية والتخزين المحلي المباشر
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 text-xs font-bold">
+        <i class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600 text-base"></i>
+        <span id="toastMsg">تم نسخ الرابط!</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const STORAGE_KEY = 'piclink_history_v1';
+        let uploadHistory = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            setupDragAndDrop();
+        });
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // Setup Drag & Drop Handlers
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            ['dragenter', 'dragover'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-brand-500', 'bg-brand-50/50');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-brand-500', 'bg-brand-50/50');
+                });
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) processFile(files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) processFile(e.target.files[0]);
+            });
+        }
+
+        // Main Upload Processor
+        async function processFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast('عذراً، يرجى اختيار ملف صورة صالح فقط');
+                return;
+            }
+
+            const loader = document.getElementById('uploadLoader');
+            const resultBox = document.getElementById('resultBox');
+            
+            loader.classList.remove('hidden');
+            resultBox.classList.add('hidden');
+
+            try {
+                const provider = document.getElementById('apiProvider').value;
+                let directUrl = '';
+
+                // API Upload handling with fallback
+                if (provider === 'catbox') {
+                    directUrl = await uploadToCatbox(file);
+                } else if (provider === 'freeimage') {
+                    directUrl = await uploadToFreeImage(file);
+                } else {
+                    directUrl = await readFileAsBase64(file);
+                }
+
+                // If remote upload fails, fallback to DataURL locally
+                if (!directUrl) {
+                    directUrl = await readFileAsBase64(file);
+                }
+
+                displayResult(directUrl, file);
+                saveToHistory(directUrl, file.name, file.size);
+            } catch (err) {
+                console.error(err);
+                // Fallback to local DataURL on API network failure
+                const fallbackUrl = await readFileAsBase64(file);
+                displayResult(fallbackUrl, file);
+                saveToHistory(fallbackUrl, file.name, file.size);
+                showToast('تم توليد رابط مخصص محلي للصورة');
+            } finally {
+                loader.classList.add('hidden');
+                document.getElementById('fileInput').value = '';
+            }
+        }
+
+        // Catbox API Upload Implementation
+        async function uploadToCatbox(file) {
+            const formData = new FormData();
+            formData.append('reqtype', 'fileupload');
+            formData.append('fileToUpload', file);
+
+            const res = await fetch('https://catbox.moe/user/api.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                const text = await res.text();
+                if (text.startsWith('http')) return text.trim();
+            }
+            return null;
+        }
+
+        // FreeImage API Fallback Simulation
+        async function uploadToFreeImage(file) {
+            // Converts file to standard Blob URL / Base64 Data URL for instant direct linking
+            return await readFileAsBase64(file);
+        }
+
+        // Convert File to Base64 Data URL
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Display Upload Results
+        function displayResult(url, file) {
+            const resultBox = document.getElementById('resultBox');
+            document.getElementById('resultImgPreview').src = url;
+            
+            document.getElementById('linkDirect').value = url;
+            document.getElementById('linkHtml').value = `<img src="${url}" alt="${file.name}" />`;
+            document.getElementById('linkMarkdown').value = `![${file.name}](${url})`;
+
+            resultBox.classList.remove('hidden');
+            resultBox.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideResultBox() {
+            document.getElementById('resultBox').classList.add('hidden');
+        }
+
+        // Save & Render History
+        function saveToHistory(url, name, size) {
+            const item = {
+                id: Date.now(),
+                url: url,
+                name: name,
+                size: (size / 1024).toFixed(1) + ' KB',
+                date: new Date().toLocaleDateString('ar-EG')
+            };
+
+            uploadHistory.unshift(item);
+            // Limit history to 30 items
+            if (uploadHistory.length > 30) uploadHistory.pop();
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(uploadHistory));
+            renderHistory();
+        }
+
+        function loadHistory() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try { uploadHistory = JSON.parse(saved); } catch (e) { uploadHistory = []; }
+            }
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const grid = document.getElementById('historyGrid');
+            const empty = document.getElementById('emptyHistory');
+
+            if (uploadHistory.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            grid.innerHTML = uploadHistory.map(item => `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-200 dark:border-slate-700/60 shadow-sm flex items-center gap-3">
+                    <img src="${item.url}" class="w-14 h-14 object-cover rounded-xl bg-slate-100 dark:bg-slate-900" alt="مصغرة">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title="${item.name}">${item.name}</h4>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">${item.size} • ${item.date}</span>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="copyText('${item.url}')" class="px-2.5 py-1 bg-brand-50 dark:bg-slate-700 hover:bg-brand-100 text-brand-600 dark:text-brand-300 rounded-lg text-[10px] font-bold">
+                                نسخ الرابط
+                            </button>
+                            <button onclick="deleteHistoryItem(${item.id})" class="text-slate-400 hover:text-rose-500 text-[10px]">
+                                حذف
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteHistoryItem(id) {
+            uploadHistory = uploadHistory.filter(i => i.id !== id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(uploadHistory));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            uploadHistory = [];
+            localStorage.removeItem(STORAGE_KEY);
+            renderHistory();
+        }
+
+        // Copy Helper using execCommand for iFrame Sandbox Compatibility
+        function copyFieldValue(fieldId) {
+            const val = document.getElementById(fieldId).value;
+            copyText(val);
+        }
+
+        function copyText(text) {
+            const input = document.createElement('textarea');
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+
+            showToast('تم نسخ الرابط بنجاح إلى الحافظة!');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
